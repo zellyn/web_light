@@ -13,10 +13,12 @@ Apparently I can still solder a bit. Who knew?
 
 ## Neopixels
 
+### Through-hole LED form-factor pinout
 ![Through-hole LED form-factor pinout](./img/neopixel-8mm-pins.jpg)
 
 ## XIAO ESP32-C3
 
+### Pinout
 ![pinout](./img/pinout-xiao-esp32-c3.png)
 
 ## Sources
