@@ -1,10 +1,15 @@
 #include <stdio.h>
+
+#include "esp_err.h"
+#include "esp_event.h"
+#include "esp_log.h"
+#include "esp_netif.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "led_strip.h"
-#include "esp_log.h"
-#include "esp_err.h"
 #include "nvs_flash.h"
+
+#include "server.h"
 #include "wifi.h"
 
 // GPIO assignment
@@ -16,7 +21,7 @@
 // Delay between loops
 #define CHASE_SPEED_MS        100
 
-static const char *TAG = "web_light";
+static const char *TAG = "weblight";
 
 led_strip_handle_t configure_led(void)
 {
@@ -57,8 +62,15 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
 
+    // Initialize other things
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
+
+    ESP_LOGI(TAG, "Starting webserver");
+    server_setup_and_start();
 
     led_strip_handle_t led_strip = configure_led();
     uint16_t hue = 0;

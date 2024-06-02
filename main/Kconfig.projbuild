@@ -1,4 +1,4 @@
-menu "Web_Light Configuration"
+menu "WebLight Configuration"
 
     config ESP_WIFI_SSID
         string "WiFi SSID"
