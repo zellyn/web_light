@@ -9,6 +9,7 @@
 #include "led_strip.h"
 #include "nvs_flash.h"
 
+#include "weblight.h"
 #include "server.h"
 #include "wifi.h"
 
@@ -20,8 +21,6 @@
 #define LED_STRIP_RMT_RES_HZ  (10 * 1000 * 1000)
 // Delay between loops
 #define CHASE_SPEED_MS        100
-
-static const char *TAG = "weblight";
 
 led_strip_handle_t configure_led(void)
 {

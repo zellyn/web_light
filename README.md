@@ -172,3 +172,10 @@ it's the only thing named that way. Fortunately, `idf.py flash` and
 - HSV conversion copied from [examples/peripherals/rmt/led_strip/main/led_strip_example_main.c](https://github.com/espressif/esp-idf/blob/master/examples/peripherals/rmt/led_strip/main/led_strip_example_main.c)
 - wifi code copied from [examples/wifi/getting_started/station/main/station_example_main.c](https://github.com/espressif/esp-idf/blob/v5.2.1/examples/wifi/getting_started/station/main/station_example_main.c)
 - webserver code copied from [examples/protocols/http_server/simple/main/main.c](https://github.com/espressif/esp-idf/blob/master/examples/protocols/http_server/simple/main/main.c)
+- url encode/decode copied from [examples/common_components/protocol_examples_common/protocol_examples_utils.c](https://github.com/espressif/esp-idf/blob/master/examples/common_components/protocol_examples_common/protocol_examples_utils.c)
+
+# Log
+
+## Getting a simple LED chaser to work
+
+![chaser and PI](./img/led-chaser.jpg)
