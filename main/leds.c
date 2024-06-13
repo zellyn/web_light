@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 
 #include "esp_err.h"
 #include "esp_log.h"
@@ -18,11 +19,14 @@
 // Delay between loops
 #define CHASE_SPEED_MS        100
 
-struct rgb color1;
-struct rgb color2;
-bool fade;
-uint16_t delay_ms;
+struct rgb colors[] = {
+  {0x00, 0x00, 0x00},
+  {0x00, 0x00, 0x00},
+};
 
+volatile uint16_t fade_steps = 100;
+volatile uint16_t fade_step_ms = 1;
+volatile uint16_t stay_ms = 5000;
 
 uint16_t clamp(uint16_t min, uint16_t max, uint16_t val) {
   if (val < min) return min;
@@ -30,25 +34,41 @@ uint16_t clamp(uint16_t min, uint16_t max, uint16_t val) {
   return val;
 }
 
-esp_err_t parse_hash_rrggbb_hex_color(char* color, uint8_t* r, uint8_t* g, uint8_t* b) {
-  if (strnlen(color, 8) != 7) {
+// Get uint8_t value of hex digit, or 0, if it's not a valid hex digit.
+uint8_t char2hex(char c) {
+  if (c < '0') return 0;
+  if (c <= '9') return (uint8_t)(c-'0');
+  c = toupper(c);
+  if (c < 'A') return 0;
+  if (c <= 'F') return (uint8_t)(c-'A'+10);
+  return 0;
+}
+
+esp_err_t parse_hash_rrggbb_hex_color(char* color, struct rgb* rgb) {
+  ESP_LOGI(TAG, "Parsing hex color '%s'", color);
+ if (strnlen(color, 8) != 7) {
+   ESP_LOGI(TAG, "Want size 7; got %d", strnlen(color, 8));
     return ESP_ERR_INVALID_SIZE;
   }
 
   if (*color != '#') {
+    ESP_LOGI(TAG, "Want first char of '#'; got %c", *color);
     return ESP_ERR_INVALID_ARG;
   }
 
   for (size_t i=1; i <7; i++) {
-    char c = color[i];
-    if (!isxdigit(c)) {
+    if (!isxdigit((int)(color[i]))) {
+      ESP_LOGI(TAG, "Bad hex digit: %c", color[i]);
       return ESP_ERR_INVALID_ARG;
     }
   }
 
-  *r = 0;
-  *g = 0;
-  *b = 0;
+  rgb->r = char2hex(color[2]);
+  rgb->r += char2hex(color[1]) << 4;
+  rgb->g = char2hex(color[4]);
+  rgb->g += char2hex(color[3]) << 4;
+  rgb->b = char2hex(color[6]);
+  rgb->b += char2hex(color[5]) << 4;
 
   return ESP_OK;
 }
@@ -88,17 +108,23 @@ led_strip_handle_t configure_led(void)
 void run_weblight(void)
 {
     led_strip_handle_t led_strip = configure_led();
-    uint16_t hue = 0;
+    // uint16_t hue = 0;
 
     ESP_LOGI(TAG, "Start blinking LED strip");
 
+    int cur = 0;
     while(1) {
+      cur = cur^1;
+
       for (int i = 0; i < LED_STRIP_LED_NUMBERS; i++) {
-	hue = (hue+4)%360;
-	ESP_ERROR_CHECK(led_strip_set_pixel_hsv(led_strip, i, hue, 255, 255));
+	ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, i, colors[cur].g, colors[cur].r, colors[cur].b));
 	ESP_ERROR_CHECK(led_strip_refresh(led_strip));
-	ESP_ERROR_CHECK(led_strip_set_pixel_hsv(led_strip, i, 0, 0, 0));
-	vTaskDelay(pdMS_TO_TICKS(CHASE_SPEED_MS));
+	// hue = (hue+4)%360;
+	// ESP_ERROR_CHECK(led_strip_set_pixel_hsv(led_strip, i, hue, 255, 255));
+	// ESP_ERROR_CHECK(led_strip_refresh(led_strip));
+	// ESP_ERROR_CHECK(led_strip_set_pixel_hsv(led_strip, i, 0, 0, 0));
+	// vTaskDelay(pdMS_TO_TICKS(CHASE_SPEED_MS));
       }
+      vTaskDelay(pdMS_TO_TICKS(stay_ms));
     }
 }

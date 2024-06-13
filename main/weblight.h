@@ -1,3 +1,3 @@
 #pragma once
 
-static const char *TAG = "weblight";
+static const char *TAG = "weblight1";

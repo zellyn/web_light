@@ -1,15 +1,17 @@
 #pragma once
 
 struct rgb {
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
+  volatile uint8_t r;
+  volatile uint8_t g;
+  volatile uint8_t b;
 };
 
-extern struct rgb color1;
-extern struct rgb color2;
+extern struct rgb colors[];
 
-extern bool fade;
-extern uint16_t delay_ms;
+volatile extern uint16_t fade_steps;
+volatile extern uint16_t fade_step_ms;
+volatile extern uint16_t stay_ms;
 
 void run_weblight(void);
+
+esp_err_t parse_hash_rrggbb_hex_color(char* color, struct rgb* rgb);
