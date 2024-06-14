@@ -9,6 +9,7 @@
 
 #include "weblight.h"
 #include "leds.h"
+#include "hsv.h"
 
 // GPIO assignment
 #define LED_STRIP_BLINK_GPIO  2
@@ -21,11 +22,11 @@
 
 struct rgb colors[] = {
   {0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00},
+  {0xe0, 0x08, 0xb9},
 };
 
 volatile uint16_t fade_steps = 100;
-volatile uint16_t fade_step_ms = 1;
+volatile uint16_t fade_step_ms = 10;
 volatile uint16_t stay_ms = 5000;
 
 uint16_t clamp(uint16_t min, uint16_t max, uint16_t val) {
@@ -112,19 +113,58 @@ void run_weblight(void)
 
     ESP_LOGI(TAG, "Start blinking LED strip");
 
-    int cur = 0;
+    float t;
+    uint16_t h0, h1, s0, s1, v0, v1;
+    uint16_t r, g, b;
+
+    int cur = 1;
     while(1) {
       cur = cur^1;
 
-      for (int i = 0; i < LED_STRIP_LED_NUMBERS; i++) {
-	ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, i, colors[cur].g, colors[cur].r, colors[cur].b));
+      int fs = fade_steps;
+
+      if (fs == 0) {
+	for (int i = 0; i < LED_STRIP_LED_NUMBERS; i++) {
+	  ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, i, colors[cur].g, colors[cur].r, colors[cur].b));
+	}
 	ESP_ERROR_CHECK(led_strip_refresh(led_strip));
-	// hue = (hue+4)%360;
-	// ESP_ERROR_CHECK(led_strip_set_pixel_hsv(led_strip, i, hue, 255, 255));
-	// ESP_ERROR_CHECK(led_strip_refresh(led_strip));
-	// ESP_ERROR_CHECK(led_strip_set_pixel_hsv(led_strip, i, 0, 0, 0));
-	// vTaskDelay(pdMS_TO_TICKS(CHASE_SPEED_MS));
       }
+
+      else {
+
+	rgb2hsv(colors[1-cur].r, colors[1-cur].g, colors[1-cur].b, &h0, &s0, &v0);
+	rgb2hsv(colors[cur].r, colors[cur].g, colors[cur].b, &h1, &s1, &v1);
+
+	// If we're starting or ending black, use the other's H and S.
+	if (v0 == 0) {
+	  h0 = h1;
+	  s0 = s1;
+	} else if (v1 == 0) {
+	  h1 = h0;
+	  s1 = s0;
+	}
+
+	ESP_LOGI(TAG, "Going from #%02x%02x%02x (H=%d,S=%d,V=%d) to #%02x%02x%02x (H=%d,S=%d,V=%d) in %d steps",
+		 colors[1-cur].r, colors[1-cur].g, colors[1-cur].b, h0, s0, v0,
+		 colors[cur].r, colors[cur].g, colors[cur].b, h1, s1, v1,
+		 fs);
+
+	for (int step=1; step <= fs; step++) {
+	  t =  (float)step / (float)fs;
+	  hsv2rgb(hlerp(h0, h1, t), lerp(s0, s1, t), lerp(v0, v1, t),
+		  &r, &g, &b);
+
+	  // ESP_LOGI(TAG, "  %02x%02x%02x (H=%d,S=%d,V=%d)",
+	  //          r, g, b, hlerp(h0, h1, t), lerp(s0, s1, t), lerp(v0, v1, t));
+
+	  for (int i = 0; i < LED_STRIP_LED_NUMBERS; i++) {
+	    ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, i, (uint8_t)g, (uint8_t)r, (uint8_t)b));
+	  }
+	  ESP_ERROR_CHECK(led_strip_refresh(led_strip));
+	  vTaskDelay(pdMS_TO_TICKS(fade_step_ms));
+	}
+      }
+
       vTaskDelay(pdMS_TO_TICKS(stay_ms));
     }
 }

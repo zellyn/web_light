@@ -43,6 +43,12 @@ static const char *form_html = "<html>\
 <label for='color2'>color 2: </label><input id='color2' name='color2' type='color' value='#%02x%02x%02x'/><br>\
 <button>Submit</button>\
 </form>\
+<br><br><br>\
+<hr>\
+<p><small>\
+WebLight code &copy; 2024 <a href='https://zellyn.com'>Zellyn Hunter</a> (MIT Licensed)<br>\
+Source: <a href='https://github.com/zellyn/weblight'>github.com/zellyn/weblight</a>\
+</small></p>\
 </html>";
 
 uint16_t clamped_parse(char* str, uint16_t max) {
